@@ -46,7 +46,7 @@ def check_phone(phone):
     results.append({
         "source": "TrueCaller Reference",
         "result": "Search on TrueCaller for spam reports",
-        "link": f"https://www.truecaller.com/",
+        "link": "https://www.truecaller.com/",
         "risk": "info"
     })
     

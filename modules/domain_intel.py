@@ -36,16 +36,21 @@ def check_domain(username):
     
     for domain in common_domains:
         try:
-            # Quick check if domain responds
-            response = requests.head(f"http://{domain}", timeout=3, allow_redirects=True)
-            if response.status_code < 400:
-                results.append({
-                    "domain": domain,
-                    "status": "active",
-                    "result": f"Domain {domain} is active",
-                    "risk": "info"
-                })
-        except requests.exceptions.RequestException:
+            # Try HTTPS first, then HTTP
+            for protocol in ['https', 'http']:
+                try:
+                    response = requests.head(f"{protocol}://{domain}", timeout=3, allow_redirects=True)
+                    if response.status_code < 400:
+                        results.append({
+                            "domain": domain,
+                            "status": "active",
+                            "result": f"Domain {domain} is active",
+                            "risk": "info"
+                        })
+                        break  # Found active domain, no need to try other protocol
+                except requests.exceptions.RequestException:
+                    continue
+        except Exception:
             # Domain doesn't exist or isn't accessible
             pass
     

@@ -21,19 +21,21 @@ def calculate_risk_score(data):
     }
     
     # Calculate individual component scores (0-100 scale)
-    username_score = _calculate_username_score(data.get('username', []))
-    profile_score = _calculate_profile_score(data)
-    image_score = _calculate_image_score(data.get('images', []))
-    domain_score = _calculate_domain_score(data.get('domains', []))
-    language_score = _calculate_language_score(data)
+    scores = {
+        'username': _calculate_username_score(data.get('username', [])),
+        'profile': _calculate_profile_score(data),
+        'image': _calculate_image_score(data.get('images', [])),
+        'domain': _calculate_domain_score(data.get('domains', [])),
+        'language': _calculate_language_score(data)
+    }
     
     # Calculate weighted total risk score
     risk_score = int(
-        username_score * weights["username_reuse"] +
-        profile_score * weights["profile_behavior"] +
-        image_score * weights["image_reuse"] +
-        domain_score * weights["domain_reputation"] +
-        language_score * weights["language"]
+        scores['username'] * weights["username_reuse"] +
+        scores['profile'] * weights["profile_behavior"] +
+        scores['image'] * weights["image_reuse"] +
+        scores['domain'] * weights["domain_reputation"] +
+        scores['language'] * weights["language"]
     )
     
     # Ensure score is within 0-100 range
@@ -51,8 +53,7 @@ def calculate_risk_score(data):
     confidence_level = _calculate_confidence(data)
     
     # Generate risk indicators list
-    risk_indicators = _generate_risk_indicators(data, username_score, profile_score, 
-                                                  image_score, domain_score, language_score)
+    risk_indicators = _generate_risk_indicators(data, scores)
     
     # Generate additional risk data
     risk_data = _generate_risk_data(data)
@@ -208,14 +209,13 @@ def _calculate_confidence(data):
         return "Low"
 
 
-def _generate_risk_indicators(data, username_score, profile_score, image_score, 
-                               domain_score, language_score):
+def _generate_risk_indicators(data, scores):
     """
     Generate list of human-readable risk indicators
     
     Args:
         data (dict): all collected data
-        username_score, profile_score, etc (int): individual scores
+        scores (dict): dictionary containing individual component scores
     Returns:
         list: risk indicator messages
     """
@@ -240,7 +240,7 @@ def _generate_risk_indicators(data, username_score, profile_score, image_score,
             indicators.append(result.get('result', 'Phone-related risk detected'))
     
     # Image reuse indicator
-    if image_score > 0:
+    if scores['image'] > 0:
         indicators.append("Public profile image should be checked for reuse")
     
     # Domain indicators

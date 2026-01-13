@@ -1,5 +1,6 @@
 import argparse
 import sys
+import os
 from modules.username_search import search_username
 from modules.email_analysis import check_email
 from modules.phone_analysis import check_phone
@@ -126,7 +127,9 @@ Note: Only uses publicly available data. No identity confirmation.
     
     # Write JSON if requested
     if args.json:
-        json_filename = args.output.replace('.txt', '.json') if args.output.endswith('.txt') else args.output + '.json'
+        # Use os.path.splitext for safer filename manipulation
+        base_name, ext = os.path.splitext(args.output)
+        json_filename = base_name + '.json'
         print(f"[*] Writing JSON output to {json_filename}")
         write_output_json(results, filename=json_filename)
         print(f"    ✓ JSON output written to {json_filename}")
