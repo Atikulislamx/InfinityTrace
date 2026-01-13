@@ -1,6 +1,6 @@
 # InfinityTrace
 
-![InfinityTrace Banner](https://github.com/Atikulislamx/InfinityTrace/blob/main/assets/image/banner.jpeg)
+![InfinityTrace Banner](https://github.com/Atikulislamx/InfinityTrace/blob/main/assets/images/banner.jpeg)
 
 **InfinityTrace** is an open-source OSINT (Open-Source Intelligence) tool for mapping **public digital footprints** across social media platforms and the web.  
 It helps identify public accounts, references, and behavioral risk indicators for usernames, emails, phone numbers, and names — strictly **public data only**, without confirming real identities.
