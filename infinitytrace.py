@@ -110,7 +110,11 @@ Note: This tool uses only publicly available data.
     print(f"  ✓ Text report written to {args.output}")
     
     if args.json:
-        json_filename = args.output.replace('.txt', '.json') if args.output.endswith('.txt') else args.output + '.json'
+        # Create JSON filename by replacing extension or appending .json
+        if args.output.endswith('.txt'):
+            json_filename = args.output[:-4] + '.json'
+        else:
+            json_filename = args.output + '.json'
         write_output_json(results, filename=json_filename)
         print(f"  ✓ JSON report written to {json_filename}")
     

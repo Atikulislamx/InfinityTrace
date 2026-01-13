@@ -63,8 +63,8 @@ def calculate_risk_score(data):
     # Based on associated domains
     domain_results = data.get('domains', [])
     if domain_results:
-        # More domain associations = higher risk
-        domain_count = len([d for d in domain_results if 'domain' in d])
+        # Count only entries that have 'domain' key (actual domains, not services)
+        domain_count = len([d for d in domain_results if 'domain' in d and 'service' not in d])
         if domain_count >= 3:
             domain_reputation_score = 70
         elif domain_count >= 1:

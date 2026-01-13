@@ -150,6 +150,19 @@ def write_output_json(data, filename="output.json"):
     utc_plus_6 = timezone(timedelta(hours=6))
     timestamp = datetime.now(utc_plus_6).isoformat()
     
+    # Calculate confidence level (same logic as TXT output)
+    username_data = data.get('username', [])
+    email_data = data.get('email', [])
+    phone_data = data.get('phone', [])
+    total_findings = len(username_data) + len(email_data) + len(phone_data)
+    
+    if total_findings >= 5:
+        confidence = "High"
+    elif total_findings >= 2:
+        confidence = "Medium"
+    else:
+        confidence = "Low"
+    
     output = {
         "metadata": {
             "report_type": "Public OSINT Footprint & Risk Analysis",
@@ -174,7 +187,7 @@ def write_output_json(data, filename="output.json"):
         "assessment": {
             "risk_score": data.get('risk_score', 0),
             "risk_level": data.get('risk_level', 'LOW'),
-            "confidence": "Medium"
+            "confidence": confidence
         },
         "disclaimer": "Public data only. No identity confirmation."
     }
