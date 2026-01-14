@@ -49,11 +49,14 @@ except ImportError:
     from utils.normalizer import normalize_email
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
 logger = logging.getLogger(__name__)
+
+# Risk scoring constants
+RISK_THRESHOLD_HIGH = 61  # Scores >= 61 are HIGH risk
+RISK_THRESHOLD_MEDIUM = 31  # Scores >= 31 are MEDIUM risk
+# Scores < 31 are LOW risk
+
+PROFILE_COUNT_THRESHOLD = 3  # Number of profiles that indicate high visibility
 
 # Known disposable email domains
 DISPOSABLE_DOMAINS = {
@@ -94,6 +97,11 @@ def validate_email_rfc(email: str) -> bool:
     """
     try:
         # RFC 5322 compliant email regex pattern
+        # Pattern structure:
+        # - Local part: [a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+
+        # - @ symbol
+        # - Domain: [a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?
+        # - Subdomains: (?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*
         pattern = r'^[a-zA-Z0-9.!#$%&\'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$'
         
         if not re.match(pattern, email):
@@ -328,7 +336,7 @@ def check_haveibeenpwned(email: str) -> Dict[str, Any]:
     """
     result = {
         'service': 'HaveIBeenPwned',
-        'email_sha1': hashlib.sha1(email.encode()).hexdigest(),
+        'email_sha256': hashlib.sha256(email.encode()).hexdigest(),  # SHA256 for better security
         'check_url': f"https://haveibeenpwned.com/account/{email}",
         'api_url': f"https://haveibeenpwned.com/api/v3/breachedaccount/{email}",
         'breaches': [],
@@ -376,7 +384,7 @@ def check_emailrep(email: str) -> Dict[str, Any]:
     try:
         url = f"https://emailrep.io/{email}"
         headers = {
-            'User-Agent': 'InfinityTrace-OSINT/1.0',
+            'User-Agent': 'InfinityTrace-OSINT/1.0 (https://github.com/Atikulislamx/InfinityTrace)',
             'Accept': 'application/json'
         }
         
@@ -613,16 +621,16 @@ def calculate_risk_score(analysis_data: Dict[str, Any]) -> Tuple[int, str]:
     # Factor 7: High profile visibility (+10)
     profiles = analysis_data.get('profiles', [])
     profile_count = len([p for p in profiles if p.get('exists') or p.get('found')])
-    if profile_count >= 3:
+    if profile_count >= PROFILE_COUNT_THRESHOLD:
         risk_score += 10
     
     # Ensure score is within 0-100 range
     risk_score = max(0, min(100, risk_score))
     
-    # Determine risk level
-    if risk_score >= 61:
+    # Determine risk level using defined thresholds
+    if risk_score >= RISK_THRESHOLD_HIGH:
         risk_level = 'HIGH'
-    elif risk_score >= 31:
+    elif risk_score >= RISK_THRESHOLD_MEDIUM:
         risk_level = 'MEDIUM'
     else:
         risk_level = 'LOW'
