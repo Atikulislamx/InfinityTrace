@@ -72,20 +72,23 @@ VOIP_CARRIERS = {
 }
 
 # Phone type mapping for better readability
-PHONE_TYPE_NAMES = {
-    PhoneNumberType.FIXED_LINE: "FIXED_LINE",
-    PhoneNumberType.MOBILE: "MOBILE",
-    PhoneNumberType.FIXED_LINE_OR_MOBILE: "FIXED_LINE_OR_MOBILE",
-    PhoneNumberType.TOLL_FREE: "TOLL_FREE",
-    PhoneNumberType.PREMIUM_RATE: "PREMIUM_RATE",
-    PhoneNumberType.SHARED_COST: "SHARED_COST",
-    PhoneNumberType.VOIP: "VOIP",
-    PhoneNumberType.PERSONAL_NUMBER: "PERSONAL_NUMBER",
-    PhoneNumberType.PAGER: "PAGER",
-    PhoneNumberType.UAN: "UAN",
-    PhoneNumberType.VOICEMAIL: "VOICEMAIL",
-    PhoneNumberType.UNKNOWN: "UNKNOWN"
-} if phonenumbers else {}
+if phonenumbers:
+    PHONE_TYPE_NAMES = {
+        PhoneNumberType.FIXED_LINE: "FIXED_LINE",
+        PhoneNumberType.MOBILE: "MOBILE",
+        PhoneNumberType.FIXED_LINE_OR_MOBILE: "FIXED_LINE_OR_MOBILE",
+        PhoneNumberType.TOLL_FREE: "TOLL_FREE",
+        PhoneNumberType.PREMIUM_RATE: "PREMIUM_RATE",
+        PhoneNumberType.SHARED_COST: "SHARED_COST",
+        PhoneNumberType.VOIP: "VOIP",
+        PhoneNumberType.PERSONAL_NUMBER: "PERSONAL_NUMBER",
+        PhoneNumberType.PAGER: "PAGER",
+        PhoneNumberType.UAN: "UAN",
+        PhoneNumberType.VOICEMAIL: "VOICEMAIL",
+        PhoneNumberType.UNKNOWN: "UNKNOWN"
+    }
+else:
+    PHONE_TYPE_NAMES = {}
 
 
 def validate_phone_number(phone: str, region: Optional[str] = None) -> Tuple[bool, Optional[Any]]:
@@ -353,14 +356,6 @@ def check_spam_databases(phone: str) -> List[Dict[str, Any]]:
         'type': 'spam_database'
     })
     
-    # Sync.me (formerly WhitePages Caller ID)
-    spam_sources.append({
-        'source': 'Sync.me',
-        'link': f"https://sync.me/",
-        'description': 'Phone number identification service',
-        'type': 'spam_database'
-    })
-    
     logger.info(f"Generated {len(spam_sources)} spam database references for {phone}")
     return spam_sources
 
@@ -395,14 +390,6 @@ def discover_public_mentions(phone: str) -> List[Dict[str, Any]]:
         'link': f"https://duckduckgo.com/?q={phone}",
         'description': 'Privacy-focused search for public mentions',
         'type': 'search_engine'
-    })
-    
-    # Pastebin search
-    public_sources.append({
-        'source': 'Pastebin',
-        'link': f"https://psbdmp.ws/",
-        'description': 'Search paste sites for data leaks (use search feature)',
-        'type': 'paste_site'
     })
     
     # Social media search references
@@ -605,9 +592,9 @@ def analyze_phone(phone: str, region: Optional[str] = None) -> Dict[str, Any]:
         'risk_level': 'LOW'
     }
     
-    # Step 1: Extract phone metadata
+    # Step 1: Extract phone metadata (use normalized phone for consistency)
     try:
-        result['metadata'] = get_phone_metadata(phone, region)
+        result['metadata'] = get_phone_metadata(normalized_phone, region)
         logger.info(f"Metadata: {result['metadata']['region']}, {result['metadata']['line_type']}")
     except Exception as e:
         logger.error(f"Error extracting metadata: {e}")
