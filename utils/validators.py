@@ -20,8 +20,25 @@ def is_valid_email(email: str) -> bool:
 
 def is_valid_phone(phone: str) -> bool:
     """
-    Basic phone number validation: starts with + or number, 7-15 digits
+    Phone number validation using phonenumbers library if available.
+    Falls back to basic validation: starts with + or number, 7-15 digits
     """
+    try:
+        import phonenumbers
+        from phonenumbers import NumberParseException
+        
+        # Try to parse and validate using phonenumbers library
+        try:
+            parsed = phonenumbers.parse(phone, None)
+            return phonenumbers.is_valid_number(parsed) or phonenumbers.is_possible_number(parsed)
+        except NumberParseException:
+            # Fall back to basic validation if parsing fails
+            pass
+    except ImportError:
+        # phonenumbers not available, use basic validation
+        pass
+    
+    # Fallback: basic pattern matching
     pattern = r"^\+?\d{7,15}$"
     return bool(re.match(pattern, phone))
 
