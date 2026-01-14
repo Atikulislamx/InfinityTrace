@@ -63,7 +63,7 @@ class PlatformSearcher:
         self.username = username
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
-                         '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                         '(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
             'Accept-Language': 'en-US,en;q=0.5',
             'Accept-Encoding': 'gzip, deflate',
@@ -119,7 +119,7 @@ class InstagramSearcher(PlatformSearcher):
                 "platform": "Instagram",
                 "url": url,
                 "account_age": "Unknown",
-                "profile_image": f"https://www.instagram.com/{self.username}/",
+                "profile_image": "Unknown (requires authentication)",
                 "bio": "Public profile (details require authentication)",
                 "confidence_score": 85
             }
@@ -172,7 +172,7 @@ class TwitterSearcher(PlatformSearcher):
                 "platform": "Twitter/X",
                 "url": url,
                 "account_age": "Unknown",
-                "profile_image": f"https://twitter.com/{self.username}/photo",
+                "profile_image": "Unknown (requires authentication)",
                 "bio": "Public profile (details require authentication)",
                 "confidence_score": 80
             }
@@ -232,7 +232,7 @@ class RedditSearcher(PlatformSearcher):
                 "platform": "Reddit",
                 "url": url,
                 "account_age": "Unknown",
-                "profile_image": f"https://www.reddit.com/user/{self.username}",
+                "profile_image": "Unknown (requires API access)",
                 "bio": "Reddit user profile",
                 "confidence_score": 85
             }
