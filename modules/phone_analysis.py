@@ -149,8 +149,11 @@ def normalize_to_e164(phone: str, region: Optional[str] = None) -> str:
         str: Normalized phone number in E.164 format or original if parsing fails
     """
     if phonenumbers is None:
-        # Fallback normalization
-        return normalize_phone(phone)
+        # Fallback normalization - extract string from dict
+        norm_result = normalize_phone(phone)
+        if isinstance(norm_result, dict):
+            return norm_result.get('normalized_phone', phone)
+        return norm_result if norm_result else phone
     
     try:
         is_valid, parsed = validate_phone_number(phone, region)
@@ -159,11 +162,18 @@ def normalize_to_e164(phone: str, region: Optional[str] = None) -> str:
             logger.info(f"Normalized {phone} to {normalized}")
             return normalized
         else:
-            # Return cleaned version if parsing fails
-            return normalize_phone(phone)
+            # Return cleaned version if parsing fails - extract string from dict
+            norm_result = normalize_phone(phone)
+            if isinstance(norm_result, dict):
+                return norm_result.get('normalized_phone', phone)
+            return norm_result if norm_result else phone
     except Exception as e:
         logger.error(f"Error normalizing phone number: {e}")
-        return normalize_phone(phone)
+        # Extract string from dict on error
+        norm_result = normalize_phone(phone)
+        if isinstance(norm_result, dict):
+            return norm_result.get('normalized_phone', phone)
+        return norm_result if norm_result else phone
 
 
 def get_phone_metadata(phone: str, region: Optional[str] = None) -> Dict[str, Any]:
@@ -263,7 +273,8 @@ def detect_voip_virtual(phone_metadata: Dict[str, Any]) -> Dict[str, bool]:
     }
     
     line_type = phone_metadata.get('line_type', 'UNKNOWN')
-    carrier = phone_metadata.get('carrier', '').lower()
+    carrier = phone_metadata.get('carrier', '')
+    carrier = carrier.lower() if carrier else ''
     
     # Check if explicitly marked as VoIP
     if line_type == 'VOIP':

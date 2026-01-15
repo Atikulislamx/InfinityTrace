@@ -659,12 +659,16 @@ def analyze_email(email: str) -> Dict[str, Any]:
     """
     logger.info(f"Starting comprehensive analysis for email: {email}")
     
-    # Normalize email
-    email = normalize_email(email)
+    # Normalize email - extract string value from dict return
+    norm_result = normalize_email(email)
+    if isinstance(norm_result, dict):
+        normalized_email = norm_result.get('normalized_email', email)
+    else:
+        normalized_email = norm_result if norm_result else email
     
     # Initialize result structure
     result = {
-        'email': email,
+        'email': normalized_email,
         'timestamp': datetime.now(timezone.utc).isoformat(),
         'is_valid': False,
         'is_disposable': False,
@@ -678,20 +682,20 @@ def analyze_email(email: str) -> Dict[str, Any]:
     }
     
     # Step 1: Validate email
-    result['is_valid'] = validate_email_rfc(email)
+    result['is_valid'] = validate_email_rfc(normalized_email)
     if not result['is_valid']:
-        logger.warning(f"Email {email} failed RFC validation")
+        logger.warning(f"Email {normalized_email} failed RFC validation")
         result['risk_score'] = 50
         result['risk_level'] = 'MEDIUM'
         return result
     
     # Step 2: Check for disposable/role-based
-    result['is_disposable'] = is_disposable_email(email)
-    result['is_role_based'] = is_role_based_email(email)
+    result['is_disposable'] = is_disposable_email(normalized_email)
+    result['is_role_based'] = is_role_based_email(normalized_email)
     
     # Step 3: Domain intelligence
     try:
-        domain = email.split('@')[1]
+        domain = normalized_email.split('@')[1]
         result['domain_intel'] = analyze_domain_intelligence(domain)
     except Exception as e:
         logger.error(f"Error in domain intelligence: {e}")
@@ -699,21 +703,21 @@ def analyze_email(email: str) -> Dict[str, Any]:
     
     # Step 4: Public breach exposure
     try:
-        result['public_exposure'] = check_haveibeenpwned(email)
+        result['public_exposure'] = check_haveibeenpwned(normalized_email)
     except Exception as e:
         logger.error(f"Error checking breach exposure: {e}")
         result['public_exposure'] = {'error': str(e)}
     
     # Step 5: Reputation analysis
     try:
-        result['reputation'] = check_emailrep(email)
+        result['reputation'] = check_emailrep(normalized_email)
     except Exception as e:
         logger.error(f"Error checking reputation: {e}")
         result['reputation'] = {'error': str(e)}
     
     # Step 6: Profile discovery
     try:
-        result['profiles'] = discover_public_profiles(email)
+        result['profiles'] = discover_public_profiles(normalized_email)
     except Exception as e:
         logger.error(f"Error discovering profiles: {e}")
         result['profiles'] = []
@@ -726,7 +730,7 @@ def analyze_email(email: str) -> Dict[str, Any]:
         result['risk_score'] = 0
         result['risk_level'] = 'LOW'
     
-    logger.info(f"Email analysis complete for {email}")
+    logger.info(f"Email analysis complete for {normalized_email}")
     return result
 
 
