@@ -368,4 +368,26 @@ def cross_field_consistency(email: Optional[str]=None, domain: Optional[str]=Non
 
     return _risk_response(True, max(confidence, 0.0), risk_flags, "; ".join(notes))
 
+# === Simple Boolean Wrapper Functions for infinitytrace.py Compatibility ===
+
+def is_valid_username(username: str) -> bool:
+    """Simple boolean wrapper for validate_username()."""
+    result = validate_username(username)
+    return result.get("valid", False)
+
+def is_valid_email(email: str) -> bool:
+    """Simple boolean wrapper for validate_email()."""
+    result = validate_email(email)
+    return result.get("valid", False)
+
+def is_valid_phone(phone: str) -> bool:
+    """Simple boolean wrapper for validate_phone()."""
+    result = validate_phone(phone)
+    return result.get("valid", False)
+
+def is_valid_name(name: str) -> bool:
+    """Simple boolean wrapper for validate_name()."""
+    result = validate_name(name)
+    return result.get("valid", False)
+
 # End of validators.py

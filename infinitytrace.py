@@ -141,28 +141,48 @@ def validate_and_normalize_inputs(args: argparse.Namespace, ctx: AnalysisContext
         ctx.input["username"] = args.username
         if not valid:
             logger.warning(f"Username '{args.username}' may not be valid (3-30 chars, alphanumeric, _, . allowed)")
-        ctx.normalized["username"] = normalize_username(args.username)
+        norm_result = normalize_username(args.username)
+        # Handle dict return from normalizer
+        if isinstance(norm_result, dict):
+            ctx.normalized["username"] = norm_result.get("normalized_username") or norm_result.get("normalized") or args.username
+        else:
+            ctx.normalized["username"] = norm_result
     if args.email:
         valid = is_valid_email(args.email)
         ctx.validity["email"] = valid
         ctx.input["email"] = args.email
         if not valid:
             logger.warning(f"Email '{args.email}' may not be valid (RFC 5322)")
-        ctx.normalized["email"] = normalize_email(args.email)
+        norm_result = normalize_email(args.email)
+        # Handle dict return from normalizer
+        if isinstance(norm_result, dict):
+            ctx.normalized["email"] = norm_result.get("normalized_email") or norm_result.get("normalized") or args.email
+        else:
+            ctx.normalized["email"] = norm_result
     if args.phone:
         valid = is_valid_phone(args.phone)
         ctx.validity["phone"] = valid
         ctx.input["phone"] = args.phone
         if not valid:
             logger.warning(f"Phone '{args.phone}' may not be valid (7-15 digits, international formats allowed)")
-        ctx.normalized["phone"] = normalize_phone(args.phone)
+        norm_result = normalize_phone(args.phone)
+        # Handle dict return from normalizer
+        if isinstance(norm_result, dict):
+            ctx.normalized["phone"] = norm_result.get("normalized_phone") or norm_result.get("normalized") or args.phone
+        else:
+            ctx.normalized["phone"] = norm_result
     if args.name:
         valid = is_valid_name(args.name)
         ctx.validity["name"] = valid
         ctx.input["name"] = args.name
         if not valid:
             logger.warning(f"Name '{args.name}' may not be valid (letters and spaces only)")
-        ctx.normalized["name"] = normalize_name(args.name)
+        norm_result = normalize_name(args.name)
+        # Handle dict return from normalizer
+        if isinstance(norm_result, dict):
+            ctx.normalized["name"] = norm_result.get("normalized_name") or norm_result.get("normalized") or args.name
+        else:
+            ctx.normalized["name"] = norm_result
     ctx.input["mode"] = args.mode
 
 def required_inputs_present(args: argparse.Namespace) -> bool:
@@ -249,7 +269,7 @@ def main() -> None:
     # === Risk Scoring (always run) ===
     logger.info("Calculating risk/footprint score...")
     try:
-        risk_score, risk_level = calculate_risk_score(ctx)
+        risk_score, risk_level = calculate_risk_score(ctx.analysis)
         ctx.risk_score = risk_score
         ctx.risk_level = risk_level
     except Exception as e:

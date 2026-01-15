@@ -186,7 +186,7 @@ class ImageAnalysis:
             image_path = (
                 image_input
                 if os.path.exists(image_input)
-                else self.cache_image(image, image_input)
+                else ImageAnalysis.cache_image(image, image_input)
             )
 
             # Generate perceptual hashes
@@ -239,6 +239,21 @@ class ImageAnalysis:
         local_path = os.path.join("/tmp", f"{hashed_name}.jpg")
         image.save(local_path)
         return local_path
+
+
+# === Wrapper function for infinitytrace.py compatibility ===
+def check_image(username: str) -> list:
+    """
+    Wrapper function for image analysis based on username.
+    Returns list of dictionaries with image analysis results.
+    
+    Note: This is a placeholder implementation since actual image analysis
+    requires an image URL or path, not just a username.
+    """
+    # For now, return an empty list as we don't have images associated with username
+    # In a full implementation, this would search for profile images by username
+    logging.info(f"Image analysis requested for username: {username}")
+    return []
 
 
 # Example usage:

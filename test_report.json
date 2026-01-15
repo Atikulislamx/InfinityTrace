@@ -1,0 +1,118 @@
+{
+  "run_metadata": {
+    "start_time": "2026-01-15 11:13:29",
+    "duration_sec": 12.03
+  },
+  "input": {
+    "username": "testuser2",
+    "email": "test@example.com",
+    "phone": null,
+    "name": null,
+    "mode": "fast"
+  },
+  "normalized": {
+    "username": "testuser2",
+    "email": "test@example.com"
+  },
+  "validity": {
+    "username": true,
+    "email": true
+  },
+  "analysis": {
+    "domains": [
+      {
+        "domain": "testuser2.com",
+        "whois_link": "https://who.is/whois/testuser2.com",
+        "description": "Check domain registration and age",
+        "age_days": null
+      },
+      {
+        "domain": "testuser2.net",
+        "whois_link": "https://who.is/whois/testuser2.net",
+        "description": "Check domain registration and age",
+        "age_days": null
+      },
+      {
+        "domain": "testuser2.org",
+        "whois_link": "https://who.is/whois/testuser2.org",
+        "description": "Check domain registration and age",
+        "age_days": null
+      },
+      {
+        "service": "VirusTotal",
+        "link": "https://www.virustotal.com/",
+        "description": "Check domain reputation and security"
+      },
+      {
+        "service": "URLVoid",
+        "link": "https://www.urlvoid.com/",
+        "description": "Check if domain is blacklisted"
+      }
+    ],
+    "images": [],
+    "email": [
+      {
+        "source": "HaveIBeenPwned",
+        "link": "",
+        "description": "Check if email appears in known data breaches",
+        "checked": false
+      },
+      {
+        "source": "EmailRep.io",
+        "link": "https://emailrep.io/test@example.com",
+        "description": "Email reputation and trust scoring",
+        "reputation": "unknown",
+        "suspicious": false
+      }
+    ],
+    "username": [
+      {
+        "platform": "GitHub",
+        "url": "https://github.com/testuser2",
+        "account_age": "Unknown",
+        "profile_image": "https://github.com/testuser2.png",
+        "bio": "",
+        "confidence_score": 90
+      },
+      {
+        "platform": "Namechk",
+        "url": "https://namechk.com/testuser2",
+        "account_age": "N/A",
+        "profile_image": "N/A",
+        "bio": "Username availability check across 100+ platforms",
+        "confidence_score": 50
+      },
+      {
+        "platform": "Google Search",
+        "url": "https://www.google.com/search?q=%22testuser2%22+social+media+profile",
+        "account_age": "N/A",
+        "profile_image": "N/A",
+        "bio": "Google search results for 'testuser2'",
+        "confidence_score": 60
+      },
+      {
+        "platform": "Bing Search",
+        "url": "https://www.bing.com/search?q=%22testuser2%22+profile",
+        "account_age": "N/A",
+        "profile_image": "N/A",
+        "bio": "Bing search results for 'testuser2'",
+        "confidence_score": 60
+      }
+    ]
+  },
+  "correlation": {
+    "correlation_score": 0.8,
+    "patterns": [],
+    "timeline": {
+      "first_seen": null,
+      "last_seen": null,
+      "activity_span": null
+    },
+    "explainability": [
+      "No significant cross-platform or cross-identifier behavioral patterns detected."
+    ]
+  },
+  "explanation": "• No significant cross-platform or cross-identifier behavioral patterns detected.",
+  "risk_score": 36,
+  "risk_level": "MEDIUM"
+}

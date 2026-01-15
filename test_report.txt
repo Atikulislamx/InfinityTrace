@@ -1,0 +1,115 @@
+================================================================================
+InfinityTrace - OSINT Analysis Report
+================================================================================
+
+REPORT METADATA
+--------------------------------------------------------------------------------
+Generated: 2026-01-15 11:13:29
+Duration: 12.03 seconds
+
+INPUT SUMMARY
+--------------------------------------------------------------------------------
+Username       : testuser2
+Email          : test@example.com
+Mode           : fast
+
+NORMALIZED INPUTS
+--------------------------------------------------------------------------------
+Username       : testuser2
+Email          : test@example.com
+
+VALIDATION STATUS
+--------------------------------------------------------------------------------
+Username       : ✓ VALID
+Email          : ✓ VALID
+
+ANALYSIS RESULTS
+--------------------------------------------------------------------------------
+
+DOMAINS (5 result(s)):
+  domain: testuser2.com
+  whois_link: https://who.is/whois/testuser2.com
+  description: Check domain registration and age
+  age_days: None
+
+  domain: testuser2.net
+  whois_link: https://who.is/whois/testuser2.net
+  description: Check domain registration and age
+  age_days: None
+
+  domain: testuser2.org
+  whois_link: https://who.is/whois/testuser2.org
+  description: Check domain registration and age
+  age_days: None
+
+  service: VirusTotal
+  link: https://www.virustotal.com/
+  description: Check domain reputation and security
+
+  service: URLVoid
+  link: https://www.urlvoid.com/
+  description: Check if domain is blacklisted
+
+
+EMAIL (2 result(s)):
+  source: HaveIBeenPwned
+  link: 
+  description: Check if email appears in known data breaches
+  checked: False
+
+  source: EmailRep.io
+  link: https://emailrep.io/test@example.com
+  description: Email reputation and trust scoring
+  reputation: unknown
+  suspicious: False
+
+
+USERNAME (4 result(s)):
+  platform: GitHub
+  url: https://github.com/testuser2
+  account_age: Unknown
+  profile_image: https://github.com/testuser2.png
+  bio: 
+
+  platform: Namechk
+  url: https://namechk.com/testuser2
+  account_age: N/A
+  profile_image: N/A
+  bio: Username availability check across 100+ platforms
+
+  platform: Google Search
+  url: https://www.google.com/search?q=%22testuser2%22+social+media+profile
+  account_age: N/A
+  profile_image: N/A
+  bio: Google search results for 'testuser2'
+
+  platform: Bing Search
+  url: https://www.bing.com/search?q=%22testuser2%22+profile
+  account_age: N/A
+  profile_image: N/A
+  bio: Bing search results for 'testuser2'
+
+
+CORRELATION ANALYSIS
+--------------------------------------------------------------------------------
+Correlation Score: 0.8
+First Seen: None
+Last Seen: None
+Activity Span: None
+
+FINDINGS EXPLANATION
+--------------------------------------------------------------------------------
+• No significant cross-platform or cross-identifier behavioral patterns detected.
+
+RISK ASSESSMENT
+--------------------------------------------------------------------------------
+Risk Score: 36 / 100
+Risk Level: MEDIUM
+
+DISCLAIMER
+--------------------------------------------------------------------------------
+This analysis is based solely on publicly available data.
+Results do not confirm identity and should be used for informational purposes only.
+This tool is for ethical OSINT research only.
+
+================================================================================
