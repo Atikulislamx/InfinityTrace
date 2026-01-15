@@ -39,6 +39,12 @@ from utils.validators import (
     is_valid_username, is_valid_email, is_valid_phone, is_valid_name
 )
 
+# === Configuration Import ===
+from config import (
+    EXECUTION_MODES, DEFAULT_OUTPUT_FILE, DEFAULT_MODE,
+    LOG_LEVEL, LOG_FORMAT, LOG_DATE_FORMAT
+)
+
 # === Global Constants ===
 ETHICAL_BANNER = """
 ==================================================
@@ -49,13 +55,11 @@ See ETHICAL_USE.md for full guidelines.
 ==================================================
 """
 
-EXECUTION_MODES = ['fast', 'deep', 'username-only', 'contact-only']
-
 # === Logging Setup ===
 logging.basicConfig(
-    level=logging.INFO,
-    format='[%(asctime)s] %(levelname)s: %(message)s',
-    datefmt='%H:%M:%S'
+    level=getattr(logging, LOG_LEVEL, logging.INFO),
+    format=LOG_FORMAT,
+    datefmt=LOG_DATE_FORMAT
 )
 logger = logging.getLogger("InfinityTrace")
 
@@ -124,16 +128,54 @@ NOTE: This tool uses only PUBLIC data and abides by strict ethical guidelines.
     parser.add_argument("--email", type=str, help="Email to analyze (public only)")
     parser.add_argument("--phone", type=str, help="Phone to analyze (public only)")
     parser.add_argument("--name", type=str, help="Full name for soft search")
-    parser.add_argument("--output", type=str, default="output.txt", help="TXT report filename (default: output.txt)")
+    parser.add_argument("--output", type=str, default=DEFAULT_OUTPUT_FILE, help=f"TXT report filename (default: {DEFAULT_OUTPUT_FILE})")
     parser.add_argument("--json", action="store_true", help="Export JSON-format report alongside TXT")
-    parser.add_argument("--mode", type=str, choices=EXECUTION_MODES, default="fast",
-                        help=f"Execution mode: {', '.join(EXECUTION_MODES)} (default: fast)")
+    parser.add_argument("--mode", type=str, choices=EXECUTION_MODES, default=DEFAULT_MODE,
+                        help=f"Execution mode: {', '.join(EXECUTION_MODES)} (default: {DEFAULT_MODE})")
     return parser.parse_args()
 
 
 # === Input Validation & Normalization ===
 
+def sanitize_input(value: str, max_length: int = 256) -> str:
+    """
+    Sanitize user input to prevent injection attacks.
+    
+    Args:
+        value: Input string to sanitize
+        max_length: Maximum allowed length
+        
+    Returns:
+        Sanitized string
+    """
+    if not value:
+        return ""
+    
+    # Truncate to max length
+    value = str(value)[:max_length]
+    
+    # Remove null bytes
+    value = value.replace('\x00', '')
+    
+    # Remove control characters except common whitespace
+    value = ''.join(char for char in value if char.isprintable() or char in '\t\n\r ')
+    
+    # Trim whitespace
+    value = value.strip()
+    
+    return value
+
 def validate_and_normalize_inputs(args: argparse.Namespace, ctx: AnalysisContext) -> None:
+    # Sanitize all inputs first
+    if args.username:
+        args.username = sanitize_input(args.username, 64)
+    if args.email:
+        args.email = sanitize_input(args.email, 254)  # Max email length per RFC
+    if args.phone:
+        args.phone = sanitize_input(args.phone, 20)
+    if args.name:
+        args.name = sanitize_input(args.name, 128)
+    
     # Validate each input and normalize
     if args.username:
         valid = is_valid_username(args.username)

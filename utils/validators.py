@@ -33,18 +33,29 @@ try:
 except ImportError:
     phonenumbers = None
 
-DISPOSABLE_EMAIL_DOMAINS = set([
-    # List some well-known disposable domains for heuristics.
-    "mailinator.com", "10minutemail.com", "guerrillamail.com", "trashmail.com", "tempmail.com"
-])
-
-SUSPICIOUS_TLDS = set([
-    "zip", "xyz", "link", "top", "live", "work", "click", "country", "support", "gq", "ml", "cf", "tk"
-])
-
-URL_SHORTENERS = set([
-    "bit.ly", "goo.gl", "tinyurl.com", "t.co", "is.gd", "ow.ly", "buff.ly", "adf.ly", "rebrand.ly"
-])
+# Import configuration
+try:
+    from config import (
+        DISPOSABLE_EMAIL_DOMAINS, SUSPICIOUS_TLDS, URL_SHORTENERS,
+        ROLE_BASED_EMAIL_PREFIXES
+    )
+except ImportError:
+    # Fallback if config not available
+    DISPOSABLE_EMAIL_DOMAINS = {
+        "mailinator.com", "10minutemail.com", "guerrillamail.com", 
+        "trashmail.com", "tempmail.com"
+    }
+    SUSPICIOUS_TLDS = {
+        "zip", "xyz", "link", "top", "live", "work", "click", 
+        "country", "support", "gq", "ml", "cf", "tk"
+    }
+    URL_SHORTENERS = {
+        "bit.ly", "goo.gl", "tinyurl.com", "t.co", "is.gd", 
+        "ow.ly", "buff.ly", "adf.ly", "rebrand.ly"
+    }
+    ROLE_BASED_EMAIL_PREFIXES = {
+        "admin", "support", "info", "contact", "sales", "help"
+    }
 
 RE_MIME_IMAGE = re.compile(r'^image\/')
 
