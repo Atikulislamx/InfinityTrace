@@ -273,8 +273,17 @@ def calculate_domain_score(domain_data: List[Dict[str, Any]]) -> Tuple[int, floa
     if not domain_data:
         return 0, 0.0, "No domain data available"
     
-    # Filter actual domains (not just service references)
-    actual_domains = [d for d in domain_data if isinstance(d, dict) and 'domain' in d and 'service' not in d]
+    # Filter for actual domain entries (require 'domain' key and proper domain format)
+    # Exclude pure service references that don't represent actual domains
+    actual_domains = []
+    for d in domain_data:
+        if isinstance(d, dict) and 'domain' in d:
+            # Verify it has a domain value (not empty/None)
+            domain_val = d.get('domain')
+            if domain_val and isinstance(domain_val, str) and len(domain_val) > 0:
+                # Only exclude if it's explicitly marked as a service reference
+                if 'service' not in d or d.get('domain') != d.get('service'):
+                    actual_domains.append(d)
     
     domain_count = len(actual_domains)
     
@@ -724,7 +733,8 @@ def calculate_detailed_risk_score(data: Dict[str, Any]) -> Dict[str, Any]:
     final_score = max(0, min(100, final_score))
     
     # Step 10: Determine risk level
-    if final_score >= RISK_THRESHOLD_MEDIUM:
+    # Thresholds: 0-30=LOW, 31-60=MEDIUM, 61-100=HIGH
+    if final_score > RISK_THRESHOLD_MEDIUM:
         risk_level = "HIGH"
     elif final_score > RISK_THRESHOLD_LOW:
         risk_level = "MEDIUM"
