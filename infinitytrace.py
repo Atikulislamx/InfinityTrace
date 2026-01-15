@@ -39,6 +39,12 @@ from utils.validators import (
     is_valid_username, is_valid_email, is_valid_phone, is_valid_name
 )
 
+# === Configuration Import ===
+from config import (
+    EXECUTION_MODES, DEFAULT_OUTPUT_FILE, DEFAULT_MODE,
+    LOG_LEVEL, LOG_FORMAT, LOG_DATE_FORMAT
+)
+
 # === Global Constants ===
 ETHICAL_BANNER = """
 ==================================================
@@ -49,13 +55,11 @@ See ETHICAL_USE.md for full guidelines.
 ==================================================
 """
 
-EXECUTION_MODES = ['fast', 'deep', 'username-only', 'contact-only']
-
 # === Logging Setup ===
 logging.basicConfig(
-    level=logging.INFO,
-    format='[%(asctime)s] %(levelname)s: %(message)s',
-    datefmt='%H:%M:%S'
+    level=getattr(logging, LOG_LEVEL, logging.INFO),
+    format=LOG_FORMAT,
+    datefmt=LOG_DATE_FORMAT
 )
 logger = logging.getLogger("InfinityTrace")
 
@@ -124,16 +128,81 @@ NOTE: This tool uses only PUBLIC data and abides by strict ethical guidelines.
     parser.add_argument("--email", type=str, help="Email to analyze (public only)")
     parser.add_argument("--phone", type=str, help="Phone to analyze (public only)")
     parser.add_argument("--name", type=str, help="Full name for soft search")
-    parser.add_argument("--output", type=str, default="output.txt", help="TXT report filename (default: output.txt)")
+    parser.add_argument("--output", type=str, default=DEFAULT_OUTPUT_FILE, help=f"TXT report filename (default: {DEFAULT_OUTPUT_FILE})")
     parser.add_argument("--json", action="store_true", help="Export JSON-format report alongside TXT")
-    parser.add_argument("--mode", type=str, choices=EXECUTION_MODES, default="fast",
-                        help=f"Execution mode: {', '.join(EXECUTION_MODES)} (default: fast)")
+    parser.add_argument("--mode", type=str, choices=EXECUTION_MODES, default=DEFAULT_MODE,
+                        help=f"Execution mode: {', '.join(EXECUTION_MODES)} (default: {DEFAULT_MODE})")
     return parser.parse_args()
 
 
 # === Input Validation & Normalization ===
 
+def sanitize_input(value: str, max_length: int = 256) -> str:
+    """
+    Sanitize user input to prevent injection attacks.
+    
+    Args:
+        value: Input string to sanitize
+        max_length: Maximum allowed length
+        
+    Returns:
+        Sanitized string
+    """
+    if not value:
+        return ""
+    
+    # Truncate to max length
+    value = str(value)[:max_length]
+    
+    # Remove null bytes
+    value = value.replace('\x00', '')
+    
+    # Remove control characters except common whitespace
+    value = ''.join(char for char in value if char.isprintable() or char in '\t\n\r ')
+    
+    # Trim whitespace
+    value = value.strip()
+    
+    return value
+
+def extract_normalized_value(norm_result: Any, field_name: str, fallback: str) -> str:
+    """
+    Extract normalized value from normalizer result.
+    
+    Args:
+        norm_result: Result from normalizer function (dict or str)
+        field_name: Name of the field being normalized (e.g., 'username', 'email')
+        fallback: Fallback value if extraction fails
+        
+    Returns:
+        Normalized string value
+    """
+    if isinstance(norm_result, dict):
+        # Try field-specific key first (e.g., 'normalized_username')
+        normalized = norm_result.get(f"normalized_{field_name}")
+        if normalized:
+            return normalized
+        # Try generic 'normalized' key
+        normalized = norm_result.get("normalized")
+        if normalized:
+            return normalized
+        # Fall back to original value
+        return fallback
+    else:
+        # If it's already a string, return it
+        return norm_result if norm_result else fallback
+
 def validate_and_normalize_inputs(args: argparse.Namespace, ctx: AnalysisContext) -> None:
+    # Sanitize all inputs first
+    if args.username:
+        args.username = sanitize_input(args.username, 64)
+    if args.email:
+        args.email = sanitize_input(args.email, 254)  # Max email length per RFC
+    if args.phone:
+        args.phone = sanitize_input(args.phone, 20)
+    if args.name:
+        args.name = sanitize_input(args.name, 128)
+    
     # Validate each input and normalize
     if args.username:
         valid = is_valid_username(args.username)
@@ -141,28 +210,36 @@ def validate_and_normalize_inputs(args: argparse.Namespace, ctx: AnalysisContext
         ctx.input["username"] = args.username
         if not valid:
             logger.warning(f"Username '{args.username}' may not be valid (3-30 chars, alphanumeric, _, . allowed)")
-        ctx.normalized["username"] = normalize_username(args.username)
+        norm_result = normalize_username(args.username)
+        ctx.normalized["username"] = extract_normalized_value(norm_result, "username", args.username)
+        
     if args.email:
         valid = is_valid_email(args.email)
         ctx.validity["email"] = valid
         ctx.input["email"] = args.email
         if not valid:
             logger.warning(f"Email '{args.email}' may not be valid (RFC 5322)")
-        ctx.normalized["email"] = normalize_email(args.email)
+        norm_result = normalize_email(args.email)
+        ctx.normalized["email"] = extract_normalized_value(norm_result, "email", args.email)
+        
     if args.phone:
         valid = is_valid_phone(args.phone)
         ctx.validity["phone"] = valid
         ctx.input["phone"] = args.phone
         if not valid:
             logger.warning(f"Phone '{args.phone}' may not be valid (7-15 digits, international formats allowed)")
-        ctx.normalized["phone"] = normalize_phone(args.phone)
+        norm_result = normalize_phone(args.phone)
+        ctx.normalized["phone"] = extract_normalized_value(norm_result, "phone", args.phone)
+        
     if args.name:
         valid = is_valid_name(args.name)
         ctx.validity["name"] = valid
         ctx.input["name"] = args.name
         if not valid:
             logger.warning(f"Name '{args.name}' may not be valid (letters and spaces only)")
-        ctx.normalized["name"] = normalize_name(args.name)
+        norm_result = normalize_name(args.name)
+        ctx.normalized["name"] = extract_normalized_value(norm_result, "name", args.name)
+        
     ctx.input["mode"] = args.mode
 
 def required_inputs_present(args: argparse.Namespace) -> bool:
@@ -249,7 +326,7 @@ def main() -> None:
     # === Risk Scoring (always run) ===
     logger.info("Calculating risk/footprint score...")
     try:
-        risk_score, risk_level = calculate_risk_score(ctx)
+        risk_score, risk_level = calculate_risk_score(ctx.analysis)
         ctx.risk_score = risk_score
         ctx.risk_level = risk_level
     except Exception as e:

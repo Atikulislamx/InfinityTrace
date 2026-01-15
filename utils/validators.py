@@ -33,18 +33,11 @@ try:
 except ImportError:
     phonenumbers = None
 
-DISPOSABLE_EMAIL_DOMAINS = set([
-    # List some well-known disposable domains for heuristics.
-    "mailinator.com", "10minutemail.com", "guerrillamail.com", "trashmail.com", "tempmail.com"
-])
-
-SUSPICIOUS_TLDS = set([
-    "zip", "xyz", "link", "top", "live", "work", "click", "country", "support", "gq", "ml", "cf", "tk"
-])
-
-URL_SHORTENERS = set([
-    "bit.ly", "goo.gl", "tinyurl.com", "t.co", "is.gd", "ow.ly", "buff.ly", "adf.ly", "rebrand.ly"
-])
+# Import configuration
+from config import (
+    DISPOSABLE_EMAIL_DOMAINS, SUSPICIOUS_TLDS, URL_SHORTENERS,
+    ROLE_BASED_EMAIL_PREFIXES
+)
 
 RE_MIME_IMAGE = re.compile(r'^image\/')
 
@@ -367,5 +360,27 @@ def cross_field_consistency(email: Optional[str]=None, domain: Optional[str]=Non
             pass
 
     return _risk_response(True, max(confidence, 0.0), risk_flags, "; ".join(notes))
+
+# === Simple Boolean Wrapper Functions for infinitytrace.py Compatibility ===
+
+def is_valid_username(username: str) -> bool:
+    """Simple boolean wrapper for validate_username()."""
+    result = validate_username(username)
+    return result.get("valid", False)
+
+def is_valid_email(email: str) -> bool:
+    """Simple boolean wrapper for validate_email()."""
+    result = validate_email(email)
+    return result.get("valid", False)
+
+def is_valid_phone(phone: str) -> bool:
+    """Simple boolean wrapper for validate_phone()."""
+    result = validate_phone(phone)
+    return result.get("valid", False)
+
+def is_valid_name(name: str) -> bool:
+    """Simple boolean wrapper for validate_name()."""
+    result = validate_name(name)
+    return result.get("valid", False)
 
 # End of validators.py

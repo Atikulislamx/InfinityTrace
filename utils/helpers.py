@@ -270,6 +270,182 @@ def correlate_and_explain(
         "explainability": explainability
     }
 
+# --- Wrapper functions for infinitytrace.py compatibility ---
+
+def correlate_context(analysis: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Wrapper for correlate_and_explain() to match infinitytrace.py expectations.
+    Accepts analysis dict and returns correlation intelligence.
+    """
+    return correlate_and_explain(analysis)
+
+def explain_findings(ctx) -> str:
+    """
+    Generate human-readable explanation from AnalysisContext.
+    
+    Args:
+        ctx: AnalysisContext object with analysis results
+        
+    Returns:
+        str: Human-readable explanation of findings
+    """
+    correlation = ctx.correlation
+    explainability = correlation.get('explainability', [])
+    
+    if not explainability:
+        return "No significant findings from the analysis."
+    
+    return "\n".join(f"• {note}" for note in explainability)
+
+def print_banner():
+    """
+    Print ASCII art banner for InfinityTrace.
+    """
+    banner = r"""
+    ___        _____ _       _ _          _____                   
+   |_ _|_ __  |  ___(_)_ __ (_) |_ _   _|_   _| __ __ _  ___ ___ 
+    | || '_ \ | |_  | | '_ \| | __| | | | | || '__/ _` |/ __/ _ \
+    | || | | ||  _| | | | | | | |_| |_| | | || | | (_| | (_|  __/
+   |___|_| |_||_|   |_|_| |_|_|\__|\__, | |_||_|  \__,_|\___\___|
+                                   |___/                          
+    """
+    print(banner)
+    print("    OSINT Footprint Analysis Framework")
+    print("    =====================================\n")
+
+def write_output_txt(ctx, filename: str = "output.txt") -> None:
+    """
+    Write analysis results to a formatted text file.
+    
+    Args:
+        ctx: AnalysisContext object with all analysis data
+        filename: Output file path
+    """
+    with open(filename, 'w', encoding='utf-8') as f:
+        f.write("=" * 80 + "\n")
+        f.write("InfinityTrace - OSINT Analysis Report\n")
+        f.write("=" * 80 + "\n\n")
+        
+        # Metadata
+        f.write("REPORT METADATA\n")
+        f.write("-" * 80 + "\n")
+        f.write(f"Generated: {ctx.run_metadata.get('start_time', 'N/A')}\n")
+        f.write(f"Duration: {ctx.run_metadata.get('duration_sec', 'N/A')} seconds\n")
+        f.write("\n")
+        
+        # Input Summary
+        f.write("INPUT SUMMARY\n")
+        f.write("-" * 80 + "\n")
+        for key, value in ctx.input.items():
+            if value:
+                f.write(f"{key.capitalize():15}: {value}\n")
+        f.write("\n")
+        
+        # Normalized Inputs
+        if ctx.normalized:
+            f.write("NORMALIZED INPUTS\n")
+            f.write("-" * 80 + "\n")
+            for key, value in ctx.normalized.items():
+                if value:
+                    # Handle dict returns from normalizers
+                    if isinstance(value, dict):
+                        norm_val = value.get('normalized_' + key, value.get('normalized', str(value)))
+                    else:
+                        norm_val = value
+                    f.write(f"{key.capitalize():15}: {norm_val}\n")
+            f.write("\n")
+        
+        # Validity Status
+        if ctx.validity:
+            f.write("VALIDATION STATUS\n")
+            f.write("-" * 80 + "\n")
+            for key, valid in ctx.validity.items():
+                status = "✓ VALID" if valid else "⚠ WARNING"
+                f.write(f"{key.capitalize():15}: {status}\n")
+            f.write("\n")
+        
+        # Analysis Results
+        f.write("ANALYSIS RESULTS\n")
+        f.write("-" * 80 + "\n")
+        for module, results in ctx.analysis.items():
+            if results:
+                if isinstance(results, list):
+                    f.write(f"\n{module.upper()} ({len(results)} result(s)):\n")
+                    for i, item in enumerate(results[:10], 1):  # Limit to first 10
+                        if isinstance(item, dict):
+                            # Format dict results
+                            for k, v in list(item.items())[:5]:  # Limit to 5 keys
+                                f.write(f"  {k}: {v}\n")
+                            f.write("\n")
+                        else:
+                            f.write(f"  {i}. {item}\n")
+                    if len(results) > 10:
+                        f.write(f"  ... and {len(results) - 10} more\n")
+                else:
+                    f.write(f"\n{module.upper()}: {results}\n")
+        f.write("\n")
+        
+        # Correlation & Patterns
+        if ctx.correlation:
+            f.write("CORRELATION ANALYSIS\n")
+            f.write("-" * 80 + "\n")
+            f.write(f"Correlation Score: {ctx.correlation.get('correlation_score', 'N/A')}\n")
+            patterns = ctx.correlation.get('patterns', [])
+            if patterns:
+                f.write(f"Patterns Detected: {', '.join(patterns)}\n")
+            timeline = ctx.correlation.get('timeline', {})
+            if timeline:
+                f.write(f"First Seen: {timeline.get('first_seen', 'N/A')}\n")
+                f.write(f"Last Seen: {timeline.get('last_seen', 'N/A')}\n")
+                f.write(f"Activity Span: {timeline.get('activity_span', 'N/A')}\n")
+            f.write("\n")
+        
+        # Explanation
+        if ctx.explanation:
+            f.write("FINDINGS EXPLANATION\n")
+            f.write("-" * 80 + "\n")
+            f.write(ctx.explanation + "\n\n")
+        
+        # Risk Assessment
+        f.write("RISK ASSESSMENT\n")
+        f.write("-" * 80 + "\n")
+        f.write(f"Risk Score: {ctx.risk_score if ctx.risk_score is not None else 'N/A'} / 100\n")
+        f.write(f"Risk Level: {ctx.risk_level if ctx.risk_level else 'N/A'}\n")
+        f.write("\n")
+        
+        # Disclaimer
+        f.write("DISCLAIMER\n")
+        f.write("-" * 80 + "\n")
+        f.write("This analysis is based solely on publicly available data.\n")
+        f.write("Results do not confirm identity and should be used for informational purposes only.\n")
+        f.write("This tool is for ethical OSINT research only.\n")
+        f.write("\n")
+        f.write("=" * 80 + "\n")
+
+def write_output_json(ctx, filename: str = "output.json") -> None:
+    """
+    Write analysis results to a JSON file.
+    
+    Args:
+        ctx: AnalysisContext object with all analysis data
+        filename: Output file path
+    """
+    data = ctx.to_json()
+    
+    # Handle dict returns from normalizers in JSON output
+    if 'normalized' in data:
+        normalized_clean = {}
+        for key, value in data['normalized'].items():
+            if isinstance(value, dict):
+                # Extract the normalized value from dict
+                normalized_clean[key] = value.get('normalized_' + key, value.get('normalized', str(value)))
+            else:
+                normalized_clean[key] = value
+        data['normalized'] = normalized_clean
+    
+    with open(filename, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+
 # --- Main: Demo / Direct Use Example ---
 if __name__ == "__main__":
     # Example data for demonstration only

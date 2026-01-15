@@ -25,6 +25,9 @@ import logging
 import os
 from typing import Optional, Dict, Any
 
+# Import configuration
+from config import DEFAULT_PHONE_REGION
+
 logger = logging.getLogger("InfinityTraceNormalizer")
 logger.setLevel(logging.INFO)
 
@@ -97,7 +100,7 @@ def normalize_email(email_: str) -> Dict[str, Any]:
     return result
 
 
-def normalize_phone(phone: str, default_region: str = 'BD') -> Dict[str, Any]:
+def normalize_phone(phone: str, default_region: str = DEFAULT_PHONE_REGION) -> Dict[str, Any]:
     """
     E.164 normal; fallback to digit-only.
     """

@@ -2,10 +2,35 @@ import os
 import hashlib
 import json
 import logging
-from PIL import Image
-import imagehash
-import exifread
-import requests
+
+# Optional dependencies with graceful fallback
+try:
+    from PIL import Image
+    PIL_AVAILABLE = True
+except ImportError:
+    PIL_AVAILABLE = False
+    logging.warning("PIL/Pillow not available - image analysis features limited")
+
+try:
+    import imagehash
+    IMAGEHASH_AVAILABLE = True
+except ImportError:
+    IMAGEHASH_AVAILABLE = False
+    logging.warning("imagehash not available - perceptual hashing disabled")
+
+try:
+    import exifread
+    EXIFREAD_AVAILABLE = True
+except ImportError:
+    EXIFREAD_AVAILABLE = False
+    logging.warning("exifread not available - EXIF metadata extraction disabled")
+
+try:
+    import requests
+    REQUESTS_AVAILABLE = True
+except ImportError:
+    REQUESTS_AVAILABLE = False
+    logging.warning("requests not available - image downloads disabled")
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -29,7 +54,12 @@ class ImageAnalysis:
         Returns:
             Image: Preprocessed Pillow Image object.
         """
+        if not PIL_AVAILABLE:
+            raise ImportError("PIL/Pillow is required for image processing. Install with: pip install Pillow")
+        
         if image_input.startswith("http"):
+            if not REQUESTS_AVAILABLE:
+                raise ImportError("requests library is required for downloading images. Install with: pip install requests")
             logging.info("Downloading image from URL...")
             response = requests.get(image_input, stream=True)
             response.raise_for_status()
@@ -51,6 +81,10 @@ class ImageAnalysis:
         Returns:
             dict: Dictionary containing perceptual hashes.
         """
+        if not IMAGEHASH_AVAILABLE:
+            logging.warning("imagehash not available - returning empty hashes")
+            return {"pHash": None, "aHash": None, "dHash": None}
+        
         logging.info("Generating perceptual hashes...")
         hashes = {
             "pHash": str(imagehash.phash(image)),
@@ -119,10 +153,22 @@ class ImageAnalysis:
         Returns:
             dict: EXIF metadata.
         """
+        if not EXIFREAD_AVAILABLE:
+            logging.warning("exifread not available - skipping EXIF extraction")
+            return {}
+        
+        if not os.path.exists(image_path):
+            logging.warning(f"Image path does not exist: {image_path}")
+            return {}
+        
         logging.info("Extracting EXIF metadata...")
-        with open(image_path, "rb") as image_file:
-            tags = exifread.process_file(image_file, details=False)
-            return {tag: str(tags[tag]) for tag in tags}
+        try:
+            with open(image_path, "rb") as image_file:
+                tags = exifread.process_file(image_file, details=False)
+                return {tag: str(tags[tag]) for tag in tags}
+        except Exception as e:
+            logging.error(f"Failed to extract EXIF: {e}")
+            return {}
 
     @staticmethod
     def detect_cross_platform_reuse(hashes):
@@ -186,7 +232,7 @@ class ImageAnalysis:
             image_path = (
                 image_input
                 if os.path.exists(image_input)
-                else self.cache_image(image, image_input)
+                else ImageAnalysis.cache_image(image, image_input)
             )
 
             # Generate perceptual hashes
@@ -239,6 +285,21 @@ class ImageAnalysis:
         local_path = os.path.join("/tmp", f"{hashed_name}.jpg")
         image.save(local_path)
         return local_path
+
+
+# === Wrapper function for infinitytrace.py compatibility ===
+def check_image(username: str) -> list:
+    """
+    Wrapper function for image analysis based on username.
+    Returns list of dictionaries with image analysis results.
+    
+    Note: This is a placeholder implementation since actual image analysis
+    requires an image URL or path, not just a username.
+    """
+    # For now, return an empty list as we don't have images associated with username
+    # In a full implementation, this would search for profile images by username
+    logging.info(f"Image analysis requested for username: {username}")
+    return []
 
 
 # Example usage:
