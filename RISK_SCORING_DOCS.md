@@ -220,7 +220,7 @@ base_score = Σ(weighted_scores)
 
 ### Step 4: Detect Correlations
 
-Check for cross-signal patterns and calculate escalation factor:
+Check for cross-signal patterns and calculate escalation factor (product of all correlation escalation factors):
 
 ```
 escalation_factor = Π(correlation_escalation_factors)

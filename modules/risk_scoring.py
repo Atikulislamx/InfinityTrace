@@ -43,6 +43,9 @@ DEFAULT_WEIGHTS = {
     "language": 0.15
 }
 
+# Professional platforms for legitimacy detection
+PROFESSIONAL_PLATFORMS = ['LinkedIn', 'GitHub', 'StackOverflow']
+
 
 def normalize_score(score: float, min_val: float = 0, max_val: float = 100) -> int:
     """
@@ -461,9 +464,8 @@ def reduce_false_positives(score: int, data: Dict[str, Any]) -> Tuple[int, List[
     domain_data = data.get('domains', [])
     
     # Legitimacy 1: Presence on professional platforms
-    professional_platforms = ['LinkedIn', 'GitHub', 'StackOverflow']
     found_professional = [r for r in username_data if isinstance(r, dict) and 
-                         r.get('platform') in professional_platforms]
+                         r.get('platform') in PROFESSIONAL_PLATFORMS]
     
     if len(found_professional) >= 2:
         reduction = int(score * 0.10)  # 10% reduction
