@@ -76,7 +76,7 @@ class RateLimiter:
         """
         self.min_interval = 1.0 / requests_per_second
         self.last_request_time = 0.0
-        self._lock = asyncio.Lock() if ASYNC_AVAILABLE else None
+        self._async_lock = None  # Lazy initialization to avoid event loop issues
     
     def wait(self):
         """Wait if necessary to respect rate limit (synchronous)."""
@@ -88,16 +88,16 @@ class RateLimiter:
     
     async def wait_async(self):
         """Wait if necessary to respect rate limit (asynchronous)."""
-        if self._lock:
-            async with self._lock:
-                current_time = time.time()
-                time_since_last = current_time - self.last_request_time
-                if time_since_last < self.min_interval:
-                    await asyncio.sleep(self.min_interval - time_since_last)
-                self.last_request_time = time.time()
-        else:
-            # Fallback to synchronous wait
-            self.wait()
+        # Lazy initialization of async lock
+        if self._async_lock is None:
+            self._async_lock = asyncio.Lock()
+        
+        async with self._async_lock:
+            current_time = time.time()
+            time_since_last = current_time - self.last_request_time
+            if time_since_last < self.min_interval:
+                await asyncio.sleep(self.min_interval - time_since_last)
+            self.last_request_time = time.time()
 
 
 class PlatformSearcher:
@@ -727,8 +727,16 @@ def search_username(username: str, use_async: bool = False) -> List[Dict]:
     
     # Use async if requested and available
     if use_async and ASYNC_AVAILABLE:
-        # Run async version
-        return asyncio.run(search_username_async(normalized_username))
+        # Check if we're already in an async context
+        try:
+            loop = asyncio.get_running_loop()
+            # We're in an async context, cannot use asyncio.run()
+            logger.warning("Already in async context. Use search_username_async() directly instead.")
+            # Fall back to sync version
+            return _search_username_sync(normalized_username)
+        except RuntimeError:
+            # No running event loop, safe to use asyncio.run()
+            return asyncio.run(search_username_async(normalized_username))
     else:
         # Run synchronous version
         return _search_username_sync(normalized_username)
