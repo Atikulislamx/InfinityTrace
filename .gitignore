@@ -41,3 +41,7 @@ env/
 *.swo
 *~
 .DS_Store
+
+# Test and demo files
+test_risk_scoring.py
+demo_risk_scoring.py
