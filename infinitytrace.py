@@ -165,6 +165,33 @@ def sanitize_input(value: str, max_length: int = 256) -> str:
     
     return value
 
+def extract_normalized_value(norm_result: Any, field_name: str, fallback: str) -> str:
+    """
+    Extract normalized value from normalizer result.
+    
+    Args:
+        norm_result: Result from normalizer function (dict or str)
+        field_name: Name of the field being normalized (e.g., 'username', 'email')
+        fallback: Fallback value if extraction fails
+        
+    Returns:
+        Normalized string value
+    """
+    if isinstance(norm_result, dict):
+        # Try field-specific key first (e.g., 'normalized_username')
+        normalized = norm_result.get(f"normalized_{field_name}")
+        if normalized:
+            return normalized
+        # Try generic 'normalized' key
+        normalized = norm_result.get("normalized")
+        if normalized:
+            return normalized
+        # Fall back to original value
+        return fallback
+    else:
+        # If it's already a string, return it
+        return norm_result if norm_result else fallback
+
 def validate_and_normalize_inputs(args: argparse.Namespace, ctx: AnalysisContext) -> None:
     # Sanitize all inputs first
     if args.username:
@@ -184,11 +211,8 @@ def validate_and_normalize_inputs(args: argparse.Namespace, ctx: AnalysisContext
         if not valid:
             logger.warning(f"Username '{args.username}' may not be valid (3-30 chars, alphanumeric, _, . allowed)")
         norm_result = normalize_username(args.username)
-        # Handle dict return from normalizer
-        if isinstance(norm_result, dict):
-            ctx.normalized["username"] = norm_result.get("normalized_username") or norm_result.get("normalized") or args.username
-        else:
-            ctx.normalized["username"] = norm_result
+        ctx.normalized["username"] = extract_normalized_value(norm_result, "username", args.username)
+        
     if args.email:
         valid = is_valid_email(args.email)
         ctx.validity["email"] = valid
@@ -196,11 +220,8 @@ def validate_and_normalize_inputs(args: argparse.Namespace, ctx: AnalysisContext
         if not valid:
             logger.warning(f"Email '{args.email}' may not be valid (RFC 5322)")
         norm_result = normalize_email(args.email)
-        # Handle dict return from normalizer
-        if isinstance(norm_result, dict):
-            ctx.normalized["email"] = norm_result.get("normalized_email") or norm_result.get("normalized") or args.email
-        else:
-            ctx.normalized["email"] = norm_result
+        ctx.normalized["email"] = extract_normalized_value(norm_result, "email", args.email)
+        
     if args.phone:
         valid = is_valid_phone(args.phone)
         ctx.validity["phone"] = valid
@@ -208,11 +229,8 @@ def validate_and_normalize_inputs(args: argparse.Namespace, ctx: AnalysisContext
         if not valid:
             logger.warning(f"Phone '{args.phone}' may not be valid (7-15 digits, international formats allowed)")
         norm_result = normalize_phone(args.phone)
-        # Handle dict return from normalizer
-        if isinstance(norm_result, dict):
-            ctx.normalized["phone"] = norm_result.get("normalized_phone") or norm_result.get("normalized") or args.phone
-        else:
-            ctx.normalized["phone"] = norm_result
+        ctx.normalized["phone"] = extract_normalized_value(norm_result, "phone", args.phone)
+        
     if args.name:
         valid = is_valid_name(args.name)
         ctx.validity["name"] = valid
@@ -220,11 +238,8 @@ def validate_and_normalize_inputs(args: argparse.Namespace, ctx: AnalysisContext
         if not valid:
             logger.warning(f"Name '{args.name}' may not be valid (letters and spaces only)")
         norm_result = normalize_name(args.name)
-        # Handle dict return from normalizer
-        if isinstance(norm_result, dict):
-            ctx.normalized["name"] = norm_result.get("normalized_name") or norm_result.get("normalized") or args.name
-        else:
-            ctx.normalized["name"] = norm_result
+        ctx.normalized["name"] = extract_normalized_value(norm_result, "name", args.name)
+        
     ctx.input["mode"] = args.mode
 
 def required_inputs_present(args: argparse.Namespace) -> bool:

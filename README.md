@@ -71,8 +71,31 @@ Options:
   --name <value>        Soft search using full name
   --output <file>       Output file name (default: output.txt)
   --json                Export machine-readable JSON output
+  --mode <mode>         Execution mode: fast, deep, username-only, contact-only (default: fast)
   --help                Show this help message
-````
+
+Execution Modes:
+  fast           : Quick analysis with essential checks (default)
+  deep           : Comprehensive analysis of all provided inputs
+  username-only  : Only username-related searches (username, images, domains)
+  contact-only   : Only contact information (email, phone, risk scoring)
+```
+
+---
+
+## 🔧 Installation & Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/Atikulislamx/InfinityTrace.git
+cd InfinityTrace
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the tool
+python infinitytrace.py --username john_doe --mode fast
+```
 
 ---
 
@@ -156,24 +179,45 @@ InfinityTrace/
 │       └── banner.jpeg
 │
 ├── modules/
-│   ├── username_search.py
-│   ├── email_analysis.py
-│   ├── phone_analysis.py
-│   ├── image_analysis.py
-│   ├── domain_intel.py
-│   └── risk_scoring.py
+│   ├── username_search.py    # Username search across platforms
+│   ├── email_analysis.py      # Email footprint & reputation
+│   ├── phone_analysis.py      # Phone number analysis
+│   ├── image_analysis.py      # Image intelligence (optional dependencies)
+│   ├── domain_intel.py        # Domain & URL intelligence
+│   └── risk_scoring.py        # Professional risk scoring engine
 │
 ├── utils/
-│   ├── normalizer.py
-│   ├── validators.py
-│   └── helpers.py
+│   ├── normalizer.py          # Input normalization
+│   ├── validators.py          # Input validation
+│   └── helpers.py             # Report generation & correlation
 │
-├── infinitytrace.py
-├── requirements.txt
-├── output.txt
+├── config.py                  # Centralized configuration
+├── infinitytrace.py           # Main CLI orchestrator
+├── requirements.txt           # Python dependencies
 ├── CONTRIBUTING.md
 ├── ETHICAL_USE.md
 └── README.md
+```
+
+---
+
+## ⚙️ Configuration
+
+Edit `config.py` to customize:
+
+- **Risk Thresholds**: Adjust LOW/MEDIUM/HIGH risk score boundaries
+- **Default Settings**: Change default phone region, output files, execution mode
+- **Data Sources**: Update disposable email domains, suspicious TLDs, VoIP carriers
+- **Security Settings**: Enable/disable rate limiting, input sanitization
+- **Ethical Settings**: Enforce ethical use guidelines
+
+Example:
+```python
+# config.py
+RISK_THRESHOLD_LOW = 30
+RISK_THRESHOLD_MEDIUM = 60
+DEFAULT_PHONE_REGION = "US"  # Change to your region
+ENABLE_RATE_LIMITING = True
 ```
 
 ---
@@ -189,22 +233,39 @@ Key points:
 
 ---
 
-## ⚠️ Limitations
+## ⚠️ Limitations & Important Notes
 
-* Private or restricted profiles are not accessed
-* Public data may be incomplete or outdated
-* Results may contain false positives
-* Identity ownership is **never confirmed**
+* **Public Data Only**: Does not access private or restricted profiles
+* **No Identity Verification**: Results do not confirm identity ownership
+* **Data Freshness**: Public data may be incomplete, outdated, or removed
+* **False Positives**: Risk scores are probabilistic, not definitive
+* **Platform Coverage**: Limited to accessible public platforms
+* **Image Analysis**: Requires optional dependencies (Pillow, imagehash, exifread)
+* **API Rate Limits**: Some features may be rate-limited by external services
+* **Regional Variations**: Phone analysis defaults to configured region (BD)
+
+## 🛡️ Security & Privacy
+
+* **Input Sanitization**: All user inputs are sanitized to prevent injection attacks
+* **No Credential Storage**: Tool never stores or harvests credentials
+* **Ethical Mode**: Enforces ethical use guidelines by default
+* **Rate Limiting**: Respects service rate limits to prevent abuse
+* **Data Minimization**: Only collects necessary public information
 
 ---
 
 ## 📜 License & Disclaimer
 
-InfinityTrace is **open-source**. See `LICENSE` for details.
-The maintainers are **not responsible for misuse** of this tool.
-Misuse for harassment, targeting, or privacy violations is strictly prohibited.
+InfinityTrace is **open-source** under the MIT License. See `LICENSE` for details.
+
+**Important Disclaimers:**
+- The maintainers are **not responsible for misuse** of this tool
+- Misuse for harassment, stalking, doxxing, or privacy violations is **strictly prohibited**
+- This tool is for **ethical OSINT research and security assessment only**
+- Results are informational and should not be used as sole evidence for any decision
+- Always comply with local laws and regulations regarding data collection
 
 ---
 
-**InfinityTrace**
+**InfinityTrace** - Ethical OSINT Analysis Framework  
 Maintained by **Cyber Infinity**

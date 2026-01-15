@@ -26,10 +26,7 @@ import os
 from typing import Optional, Dict, Any
 
 # Import configuration
-try:
-    from config import DEFAULT_PHONE_REGION
-except ImportError:
-    DEFAULT_PHONE_REGION = 'BD'
+from config import DEFAULT_PHONE_REGION
 
 logger = logging.getLogger("InfinityTraceNormalizer")
 logger.setLevel(logging.INFO)
