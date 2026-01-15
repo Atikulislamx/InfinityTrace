@@ -539,8 +539,14 @@ def check_ssl_certificate(domain: str, port: int = 443) -> Dict[str, Any]:
     }
     
     try:
-        # Create SSL context
+        # Create SSL context with secure defaults
+        # ssl.create_default_context() automatically disables insecure protocols
+        # (TLSv1, TLSv1.1) and uses secure ciphers by default in Python 3.7+
         context = ssl.create_default_context()
+        
+        # Explicitly ensure only secure protocols are allowed
+        # This is redundant in modern Python but makes the security explicit
+        context.minimum_version = ssl.TLSVersion.TLSv1_2
         
         # Connect and get certificate
         with socket.create_connection((domain, port), timeout=10) as sock:
