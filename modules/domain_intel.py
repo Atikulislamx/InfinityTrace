@@ -25,7 +25,6 @@ Project: InfinityTrace
 import re
 import socket
 import ssl
-import hashlib
 import logging
 import json
 from typing import Dict, List, Tuple, Optional, Any
@@ -59,6 +58,9 @@ except ImportError:
 
 # Configure logging
 logger = logging.getLogger(__name__)
+
+# User-Agent for HTTP requests
+USER_AGENT = 'InfinityTrace-OSINT/1.0'
 
 # Risk scoring constants
 RISK_THRESHOLD_HIGH = 61  # Scores >= 61 are HIGH risk
@@ -106,8 +108,9 @@ def normalize_url(url: str) -> str:
     try:
         url = url.strip()
         
-        # Add scheme if missing
-        if not url.startswith(('http://', 'https://')):
+        # Add scheme if missing (case-insensitive check)
+        url_lower = url.lower()
+        if not url_lower.startswith(('http://', 'https://')):
             url = 'http://' + url
         
         # Parse URL
@@ -214,7 +217,7 @@ def expand_shortened_url(short_url: str, timeout: int = 10) -> Dict[str, Any]:
         
         # Make HEAD request to follow redirects
         headers = {
-            'User-Agent': 'InfinityTrace-OSINT/1.0 (https://github.com/Atikulislamx/InfinityTrace)'
+            'User-Agent': USER_AGENT
         }
         
         response = requests.head(
@@ -351,10 +354,30 @@ def calculate_domain_age(domain: str, whois_data: Optional[Dict] = None) -> Dict
         
         if creation_date:
             # Ensure creation_date is a datetime object
+            # Handle both datetime objects and string representations
             if isinstance(creation_date, str):
-                creation_date = datetime.fromisoformat(creation_date.replace('Z', '+00:00'))
+                # Try multiple date formats commonly used in WHOIS
+                date_formats = [
+                    '%Y-%m-%dT%H:%M:%S%z',  # ISO format with timezone
+                    '%Y-%m-%dT%H:%M:%S',    # ISO format without timezone
+                    '%Y-%m-%d %H:%M:%S',    # Common WHOIS format
+                    '%Y-%m-%d',             # Date only
+                    '%d-%b-%Y',             # DD-Mon-YYYY format
+                ]
+                
+                for fmt in date_formats:
+                    try:
+                        creation_date = datetime.strptime(creation_date.replace('Z', '+00:00'), fmt)
+                        break
+                    except ValueError:
+                        continue
+                else:
+                    # If all formats fail, log and skip
+                    logger.warning(f"Could not parse creation date: {creation_date}")
+                    creation_date = None
             
-            result['creation_date'] = creation_date.isoformat() if hasattr(creation_date, 'isoformat') else str(creation_date)
+            if creation_date and hasattr(creation_date, 'isoformat'):
+                result['creation_date'] = creation_date.isoformat() if hasattr(creation_date, 'isoformat') else str(creation_date)
             
             # Calculate age
             now = datetime.now(timezone.utc)
@@ -526,8 +549,9 @@ def check_ssl_certificate(domain: str, port: int = 443) -> Dict[str, Any]:
                 
                 if cert:
                     result['has_ssl'] = True
-                    result['issuer'] = dict(x[0] for x in cert.get('issuer', []))
-                    result['subject'] = dict(x[0] for x in cert.get('subject', []))
+                    # Certificate issuer and subject are lists of tuples
+                    result['issuer'] = dict(cert.get('issuer', []))
+                    result['subject'] = dict(cert.get('subject', []))
                     result['version'] = cert.get('version')
                     result['serial_number'] = cert.get('serialNumber')
                     
@@ -543,13 +567,16 @@ def check_ssl_certificate(domain: str, port: int = 443) -> Dict[str, Any]:
                         not_after = datetime.strptime(not_after_str, '%b %d %H:%M:%S %Y %Z')
                         result['not_after'] = not_after.isoformat()
                         
-                        # Check expiration
-                        now = datetime.now()
-                        if not_after < now:
+                        # Check expiration (use timezone-aware datetime)
+                        now = datetime.now(timezone.utc)
+                        # Convert not_after to timezone-aware
+                        not_after_aware = not_after.replace(tzinfo=timezone.utc)
+                        
+                        if not_after_aware < now:
                             result['expired'] = True
-                            result['days_until_expiry'] = (not_after - now).days
-                        else:
-                            result['days_until_expiry'] = (not_after - now).days
+                        
+                        # Calculate days until expiry (can be negative if expired)
+                        result['days_until_expiry'] = (not_after_aware - now).days
                     
                     # Subject Alternative Names
                     san = cert.get('subjectAltName', [])
@@ -708,7 +735,7 @@ def perform_web_fingerprint(url: str) -> Dict[str, Any]:
         normalized = normalize_url(url)
         
         headers = {
-            'User-Agent': 'InfinityTrace-OSINT/1.0 (https://github.com/Atikulislamx/InfinityTrace)'
+            'User-Agent': USER_AGENT
         }
         
         response = requests.get(normalized, headers=headers, timeout=10, allow_redirects=True)
@@ -788,7 +815,7 @@ def check_wayback_machine(domain: str) -> Dict[str, Any]:
         }
         
         headers = {
-            'User-Agent': 'InfinityTrace-OSINT/1.0 (https://github.com/Atikulislamx/InfinityTrace)'
+            'User-Agent': USER_AGENT
         }
         
         response = requests.get(api_url, params=params, headers=headers, timeout=15)
