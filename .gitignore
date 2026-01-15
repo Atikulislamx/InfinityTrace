@@ -5,6 +5,8 @@ test_output*.txt
 test_output*.json
 *_output.txt
 *_output.json
+test_report.*
+*_report.*
 
 # Python
 __pycache__/
