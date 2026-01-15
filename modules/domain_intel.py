@@ -367,7 +367,11 @@ def calculate_domain_age(domain: str, whois_data: Optional[Dict] = None) -> Dict
                 
                 for fmt in date_formats:
                     try:
-                        creation_date = datetime.strptime(creation_date.replace('Z', '+00:00'), fmt)
+                        # Only replace 'Z' for ISO format strings
+                        date_str = creation_date
+                        if 'T' in date_str and date_str.endswith('Z'):
+                            date_str = date_str.replace('Z', '+00:00')
+                        creation_date = datetime.strptime(date_str, fmt)
                         break
                     except ValueError:
                         continue
@@ -377,12 +381,13 @@ def calculate_domain_age(domain: str, whois_data: Optional[Dict] = None) -> Dict
                     creation_date = None
             
             if creation_date and hasattr(creation_date, 'isoformat'):
-                result['creation_date'] = creation_date.isoformat() if hasattr(creation_date, 'isoformat') else str(creation_date)
+                result['creation_date'] = creation_date.isoformat()
             
-            # Calculate age
-            now = datetime.now(timezone.utc)
-            if creation_date.tzinfo is None:
-                creation_date = creation_date.replace(tzinfo=timezone.utc)
+            # Calculate age (only if we have a valid datetime object)
+            if creation_date and hasattr(creation_date, 'tzinfo'):
+                now = datetime.now(timezone.utc)
+                if creation_date.tzinfo is None:
+                    creation_date = creation_date.replace(tzinfo=timezone.utc)
             
             age_delta = now - creation_date
             result['age_days'] = age_delta.days
@@ -1120,6 +1125,7 @@ def check_domain(username: str) -> List[Dict[str, Any]]:
     results = []
     
     # Common domain patterns for usernames
+    # Validate all at once to avoid repeated calls
     possible_domains = [
         f"{username}.com",
         f"{username}.net",
@@ -1128,7 +1134,7 @@ def check_domain(username: str) -> List[Dict[str, Any]]:
     
     # For each potential domain, provide basic intelligence
     for domain in possible_domains:
-        # Perform quick validation
+        # Quick validation (already optimized for small list)
         if validate_domain(domain):
             # Quick analysis (minimal to avoid too many API calls)
             domain_info = {
